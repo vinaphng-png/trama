@@ -448,35 +448,30 @@ function renderPhotos(imgs,ma){
     </div>`).join('');
 }
 
+// ⚠️ Điền URL Cloudflare Worker của bạn vào đây sau khi deploy
+const WORKER_URL = "https://xoa-anh.vina-phng.workers.dev";
+
 async function deletePhoto(publicId,idx,e){
   e.stopPropagation();
   if(!confirm('Xóa ảnh này?')) return;
   const status=document.getElementById('upload-status');
-  const token=deleteTokens[publicId];
-  if(token){
-    status.textContent='Đang xóa...';
-    try{
-      const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/delete_by_token`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})});
-      const data=await res.json();
-      if(data.result==='ok'){status.textContent='✓ Đã xóa!';delete deleteTokens[publicId];setTimeout(()=>loadPhotos(currentMa),3000);return;}
-    }catch(err){}
-  }
-  // Không có token: ghi đè ảnh trắng
   status.textContent='Đang xóa...';
   try{
-    const canvas=document.createElement('canvas');canvas.width=1;canvas.height=1;
-    const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));
-    const fd=new FormData();
-    fd.append('file',blob,'blank.png');
-    fd.append('upload_preset',PRESET);
-    fd.append('public_id',publicId);
-    const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUD}/image/upload`,{method:'POST',body:fd});
-    if(res.ok){status.textContent='✓ Đã xóa!';setTimeout(()=>loadPhotos(currentMa),3000);}
-    else{
-      const err=await res.json();
-      status.textContent='Lỗi: '+(err.error?.message||'Không thể xóa ảnh cũ');
+    const res=await fetch(WORKER_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({public_id:publicId})
+    });
+    const data=await res.json();
+    if(data.result==='ok'){
+      status.textContent='✓ Đã xóa ảnh thành công!';
+      setTimeout(()=>loadPhotos(currentMa),1500);
+    } else {
+      status.textContent='Lỗi: '+(data.error?.message||JSON.stringify(data));
     }
-  }catch(err){status.textContent='Có lỗi khi xóa.';}
+  }catch(err){
+    status.textContent='Không kết nối được Worker: '+err.message;
+  }
 }
 
 async function uploadImages(input){
