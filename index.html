@@ -334,6 +334,10 @@ const WORKER_URL = "https://xoa-anh.vina-phng.workers.dev";
 const photoCache = {};
 
 // localStorage: lưu ảnh đã upload để không mất khi reload
+const LS = 'vp2_';
+function lsGet(ma){ try{ return JSON.parse(localStorage.getItem(LS+ma)||'null'); }catch(e){return null;} }
+function lsSet(ma,imgs){ try{ localStorage.setItem(LS+ma, JSON.stringify(imgs)); }catch(e){} }
+function lsDel(ma,publicId){ const a=lsGet(ma); if(a) lsSet(ma,a.filter(x=>x.publicId!==publicId)); }
 
 // Merge 2 danh sách: ưu tiên URL từ Search API, giữ ảnh local chưa được index
 function mergeImgs(fromServer, fromLocal){
@@ -347,7 +351,9 @@ async function loadPhotos(ma){
   const grid = document.getElementById('photo-grid');
 
   // Hiển thị ngay từ cache phiên hoặc localStorage trong khi chờ server
-  grid.innerHTML = '<div class="photo-empty">Đang tải ảnh...</div>';
+  const cached = photoCache[ma] || lsGet(ma);
+  if(cached){ renderPhotos(cached, ma); }
+  else { grid.innerHTML = '<div class="photo-empty">Đang tải ảnh...</div>'; }
 
   // Luôn fetch từ Search API để đồng bộ
   try {
@@ -365,7 +371,8 @@ async function loadPhotos(ma){
     }));
 
     // Merge với ảnh local (phòng khi Search chưa index kịp)
-    const merged = fromServer;
+    const local  = lsGet(ma) || [];
+    const merged = mergeImgs(fromServer, local);
 
     // Cập nhật localStorage: chỉ giữ lại ảnh local mà server chưa có
     const serverIds = new Set(fromServer.map(x=>x.publicId));
@@ -376,7 +383,8 @@ async function loadPhotos(ma){
     renderPhotos(merged, ma);
   } catch(err) {
     // Nếu lỗi mạng, vẫn hiển thị ảnh từ cache
-
+    if(!cached) grid.innerHTML = `<div class="photo-empty">Lỗi tải ảnh: ${err.message}</div>`;
+    console.error('loadPhotos error:', err);
   }
 }
 
@@ -462,10 +470,11 @@ async function uploadImages(input){
   input.value = '';
   if(ok > 0){
     // Lưu vào localStorage để không mất khi reload
-
+    const local = lsGet(currentMa) || [];
+    lsSet(currentMa, [...local, ...newImgs]);
 
     photoCache[currentMa] = [...existing, ...newImgs];
-    await loadPhotos(currentMa);
+    renderPhotos(photoCache[currentMa], currentMa);
     status.textContent = `✓ Đã thêm ${ok} ảnh thành công!`;
   }
 }
