@@ -325,14 +325,16 @@ async function deletePhoto(publicId,idx,e){
       body:JSON.stringify({public_id:publicId})
     });
     const data=await res.json();
-    if(data.result==='ok'){
+    if(data.result==='ok'||res.ok){
       status.textContent='✓ Đã xóa ảnh thành công!';
       setTimeout(()=>loadPhotos(currentMa),1500);
     } else {
-      status.textContent='Lỗi: '+(data.error?.message||JSON.stringify(data));
+      status.textContent='Lỗi xóa: '+(data.error?.message||data.message||JSON.stringify(data));
+      console.error('Delete response:',data);
     }
   }catch(err){
     status.textContent='Không kết nối được Worker: '+err.message;
+    console.error('Delete error:',err);
   }
 }
 
@@ -342,10 +344,11 @@ async function uploadImages(input){
   const btn=document.getElementById('upload-btn');
   const status=document.getElementById('upload-status');
   btn.classList.add('uploading');
+  // Đếm ảnh hiện có để tiếp nối index (không ghi đè ảnh cũ)
   const existingCount=document.getElementById('photo-grid').querySelectorAll('img').length;
   let ok=0;
   for(let i=0;i<files.length;i++){
-    const publicId=`sanpham/${currentMa}_${i}`;
+    const publicId=`sanpham/${currentMa}_${existingCount+i}`;
     const fd=new FormData();
     fd.append('file',files[i]);
     fd.append('upload_preset',PRESET);
