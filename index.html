@@ -341,14 +341,12 @@ async function deletePhoto(publicIdEncoded,idx,e){
     try{data=JSON.parse(text);}catch(e){console.log('Worker raw:',text);}
     console.log('Delete response status:',res.status,'data:',data);
     if(res.ok){
-      // Xóa khỏi cache và cập nhật grid ngay lập tức
+      // Xóa khỏi cache local — KHÔNG probe lại CDN vì CDN cache có thể trả lại ảnh cũ
       if(photoCache[currentMa]){
         photoCache[currentMa]=photoCache[currentMa].filter(x=>x.publicId!==publicId);
         renderPhotos(photoCache[currentMa],currentMa);
       }
       status.textContent='✓ Đã xóa ảnh thành công!';
-      // Reload lại sau 2s để đảm bảo đồng bộ
-      setTimeout(()=>loadPhotos(currentMa),2000);
     } else {
       status.textContent='Lỗi xóa ('+res.status+'): '+(data.error?.message||data.message||text.slice(0,100));
       console.error('Delete failed:',res.status,text);
