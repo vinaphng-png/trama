@@ -52,12 +52,19 @@ body{font-family:Arial,sans-serif;background:#f0f7f0;color:#222;font-size:15px;o
 .top-text p{font-size:11px;opacity:.8;margin-top:2px}
 .top .count{margin-left:auto;font-size:12px;background:rgba(255,255,255,0.2);border-radius:20px;padding:4px 11px;white-space:nowrap;flex-shrink:0}
 .toolbar{background:#fff;padding:10px 12px;border-bottom:2px solid #e8f5e9;display:flex;flex-direction:column;gap:8px}
-.search-row{display:flex;gap:8px}
-.search-mode{border:1.5px solid #a5d6a7;border-radius:8px;padding:0 10px;font-size:13px;background:#f9fdf9;outline:none;-webkit-appearance:none;color:#1a7a2e;font-weight:600;flex-shrink:0;height:46px}
-.search-wrap{position:relative;flex:1}
-.search-wrap input{width:100%;border:1.5px solid #a5d6a7;border-radius:10px;padding:12px 16px 12px 44px;font-size:16px;outline:none;-webkit-appearance:none;background:#f9fdf9;height:46px}
-.search-wrap input:focus{border-color:#1a7a2e;box-shadow:0 0 0 3px rgba(26,122,46,0.12);background:#fff}
-.search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#4caf50;font-size:20px;pointer-events:none}
+.multi-search{display:flex;flex-direction:column;gap:7px}
+.ms-row{display:flex;gap:7px}
+.ms-field{flex:1;display:flex;flex-direction:column;gap:3px}
+.ms-label{font-size:10px;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:.04em;padding-left:2px}
+.ms-field input{width:100%;border:1.5px solid #a5d6a7;border-radius:8px;padding:8px 10px;font-size:14px;outline:none;-webkit-appearance:none;background:#f9fdf9;box-sizing:border-box}
+.ms-field input:focus{border-color:#1a7a2e;box-shadow:0 0 0 3px rgba(26,122,46,0.12);background:#fff}
+.ms-row2{display:flex;align-items:center;gap:8px}
+.logic-toggle{display:flex;align-items:center;gap:6px;flex:1}
+.logic-btn{border:1.5px solid #a5d6a7;background:#f9fdf9;color:#555;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.logic-btn.active{background:#1a7a2e;color:#fff;border-color:#1a7a2e}
+.logic-hint{font-size:11px;color:#888;flex:1}
+.clear-btn{border:1.5px solid #ffcdd2;background:#fff8f8;color:#c62828;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.clear-btn:active{background:#ffebee}
 .filters{display:flex;gap:8px}
 .filters select{flex:1;border:1.5px solid #a5d6a7;border-radius:8px;padding:9px 10px;font-size:14px;background:#f9fdf9;outline:none;-webkit-appearance:none;color:#374151}
 .info-bar{padding:8px 12px;font-size:12px;color:#2e7d32;background:#e8f5e9;border-bottom:1px solid #c8e6c9;font-weight:500}
@@ -135,16 +142,28 @@ mark{background:#fff176;border-radius:2px;padding:0 1px}
 </div>
 
 <div class="toolbar">
-  <div class="search-row">
-    <select class="search-mode" id="search-mode" onchange="updatePlaceholder();filter()">
-      <option value="all">Tất cả</option>
-      <option value="ma">Mã liệu</option>
-      <option value="ten">Tên SP</option>
-      <option value="qc">Quy cách</option>
-    </select>
-    <div class="search-wrap">
-      <span class="search-icon">&#128269;</span>
-      <input type="text" id="q" placeholder="Nhập từ khóa tìm kiếm..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="multi-search">
+    <div class="ms-row">
+      <div class="ms-field">
+        <span class="ms-label">Mã liệu</span>
+        <input type="text" id="q-ma" placeholder="VD: SY10..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="ms-field">
+        <span class="ms-label">Tên SP</span>
+        <input type="text" id="q-ten" placeholder="VD: dây điện..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div class="ms-field">
+        <span class="ms-label">Quy cách</span>
+        <input type="text" id="q-qc" placeholder="VD: 40981..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="ms-row2">
+      <div class="logic-toggle">
+        <button id="btn-and" class="logic-btn active" onclick="setLogic('and')">AND</button>
+        <button id="btn-or"  class="logic-btn"        onclick="setLogic('or')">OR</button>
+        <span class="logic-hint" id="logic-hint">Kết quả phải khớp TẤT CẢ điều kiện</span>
+      </div>
+      <button class="clear-btn" onclick="clearSearch()">✕ Xóa</button>
     </div>
   </div>
   <div class="filters">
@@ -206,9 +225,19 @@ const dvSel = document.getElementById('dv');
 });
 document.getElementById('b-total').textContent = DATA.length.toLocaleString() + ' SP';
 
-function updatePlaceholder() {
-  const ph = {all:'Nhập từ khóa...',ma:'Nhập mã liệu...',ten:'Nhập tên sản phẩm...',qc:'Nhập quy cách...'};
-  document.getElementById('q').placeholder = ph[document.getElementById('search-mode').value];
+let searchLogic = 'and';
+function setLogic(mode){
+  searchLogic = mode;
+  document.getElementById('btn-and').classList.toggle('active', mode==='and');
+  document.getElementById('btn-or').classList.toggle('active',  mode==='or');
+  document.getElementById('logic-hint').textContent = mode==='and'
+    ? 'Kết quả phải khớp TẤT CẢ điều kiện'
+    : 'Kết quả khớp ÍT NHẤT 1 điều kiện';
+  filter();
+}
+function clearSearch(){
+  ['q-ma','q-ten','q-qc'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  filter();
 }
 
 let timer;
@@ -221,37 +250,47 @@ function hl(text, q) {
 }
 
 function run() {
-  const q = document.getElementById('q').value.trim().toLowerCase();
-  const mode = document.getElementById('search-mode').value;
-  const kho = document.getElementById('kho').value;
-  const dv = document.getElementById('dv').value.toUpperCase();
+  const qMa  = document.getElementById('q-ma').value.trim().toLowerCase();
+  const qTen = document.getElementById('q-ten').value.trim().toLowerCase();
+  const qQc  = document.getElementById('q-qc').value.trim().toLowerCase();
+  const kho  = document.getElementById('kho').value;
+  const dv   = document.getElementById('dv').value.toUpperCase();
+
+  const conditions = [];
+  if(qMa)  conditions.push(d => d.ma_sp.toLowerCase().includes(qMa));
+  if(qTen) conditions.push(d => d.ten_sp.toLowerCase().includes(qTen));
+  if(qQc)  conditions.push(d => d.quy_cach.toLowerCase().includes(qQc) || d.quy_cach2.toLowerCase().includes(qQc));
+
   let rows = DATA;
-  if(q) {
-    rows = rows.filter(d => {
-      if(mode==='ma')  return d.ma_sp.toLowerCase().includes(q);
-      if(mode==='ten') return d.ten_sp.toLowerCase().includes(q);
-      if(mode==='qc')  return d.quy_cach.toLowerCase().includes(q)||d.quy_cach2.toLowerCase().includes(q);
-      return d.ma_sp.toLowerCase().includes(q)||d.ten_sp.toLowerCase().includes(q)||d.quy_cach.toLowerCase().includes(q)||d.quy_cach2.toLowerCase().includes(q);
-    });
+  if(conditions.length) {
+    rows = rows.filter(d => searchLogic === 'and'
+      ? conditions.every(fn => fn(d))
+      : conditions.some(fn  => fn(d))
+    );
   }
   if(kho) rows = rows.filter(d => d.kho===kho);
   if(dv)  rows = rows.filter(d => (d.don_vi||'').toUpperCase()===dv);
-  const modeLabel={all:'tất cả',ma:'mã liệu',ten:'tên SP',qc:'quy cách'}[mode];
-  document.getElementById('info').textContent='🔍 '+rows.length.toLocaleString()+' kết quả'+(q?` (theo ${modeLabel}: "${document.getElementById('q').value.trim()}")`:'');
+
+  const parts = [];
+  if(qMa)  parts.push('Mã: "'+qMa+'"');
+  if(qTen) parts.push('Tên: "'+qTen+'"');
+  if(qQc)  parts.push('QC: "'+qQc+'"');
+  const suffix = parts.length ? ` (${parts.join(' '+searchLogic.toUpperCase()+' ')})` : '';
+  document.getElementById('info').textContent='🔍 '+rows.length.toLocaleString()+' kết quả'+suffix;
   const list=document.getElementById('list');
   if(!rows.length){list.innerHTML='<div class="empty">Không tìm thấy sản phẩm phù hợp</div>';return;}
-  const q0=document.getElementById('q').value.trim().toLowerCase();
+  
   const shown=rows.slice(0,100);
   list.innerHTML=shown.map(d=>{
     const idx=DATA.indexOf(d);
-    const thumbUrl=`https://res.cloudinary.com/${CLOUD}/image/upload/w_100,h_100,c_fill/sanpham/${encodeURIComponent(d.ma_sp)}_0?_=${Date.now()}`;
-    const showQc=(mode==='qc'||mode==='all')&&q0&&(d.quy_cach.toLowerCase().includes(q0)||d.quy_cach2.toLowerCase().includes(q0));
-    return `<div class="item" onclick="showDetail(${idx},'${q0.replace(/'/g,"\\'")}','${mode}')">
+    const thumbUrl=`https://res.cloudinary.com/${CLOUD}/image/upload/w_100,h_100,c_fill/sanpham/${encodeURIComponent(d.ma_sp)}_0`;
+    const showQc=qQc&&(d.quy_cach.toLowerCase().includes(qQc)||d.quy_cach2.toLowerCase().includes(qQc));
+    return `<div class="item" onclick="showDetail(${idx})">
       <div class="item-thumb"><img src="${thumbUrl}" onerror="this.parentNode.innerHTML='&#128247;'" alt=""></div>
       <div class="item-content">
-        <div class="item-ma">${hl(d.ma_sp,mode==='ma'||mode==='all'?q0:'')}</div>
-        <div class="item-name">${hl(d.ten_sp,mode==='ten'||mode==='all'?q0:'')}</div>
-        ${showQc?`<div class="item-qc">${hl(d.quy_cach,q0)}</div>`:d.quy_cach?`<div class="item-qc">${esc(d.quy_cach)}</div>`:''}
+        <div class="item-ma">${hl(d.ma_sp,qMa)}</div>
+        <div class="item-name">${hl(d.ten_sp,qTen)}</div>
+        ${showQc?`<div class="item-qc">${hl(d.quy_cach,qQc)}</div>`:d.quy_cach?`<div class="item-qc">${esc(d.quy_cach)}</div>`:''}
         <div class="item-bot">
           <span class="dv">${esc(d.don_vi)}</span>
           <span class="kho kho-${d.kho}">${esc(d.kho)}</span>
@@ -262,7 +301,7 @@ function run() {
   if(rows.length>100) list.innerHTML+=`<div class="more">... còn ${(rows.length-100).toLocaleString()} SP — hãy thu hẹp từ khóa</div>`;
 }
 
-function showDetail(idx,q,mode){
+function showDetail(idx){
   const d=DATA[idx]; if(!d) return;
   currentMa=d.ma_sp; deleteTokens={};
   document.getElementById('sheet-ma').textContent=d.ma_sp;
