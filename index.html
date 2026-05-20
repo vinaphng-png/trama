@@ -52,21 +52,24 @@ body{font-family:Arial,sans-serif;background:#f0f7f0;color:#222;font-size:15px;o
 .top-text p{font-size:11px;opacity:.8;margin-top:2px}
 .top .count{margin-left:auto;font-size:12px;background:rgba(255,255,255,0.2);border-radius:20px;padding:4px 11px;white-space:nowrap;flex-shrink:0}
 .toolbar{background:#fff;padding:10px 12px;border-bottom:2px solid #e8f5e9;display:flex;flex-direction:column;gap:8px}
-.multi-search{display:flex;flex-direction:column;gap:7px}
-.ms-row{display:flex;gap:7px}
-.ms-field{flex:1;display:flex;flex-direction:column;gap:3px}
-.ms-label{font-size:10px;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:.04em;padding-left:2px}
-.ms-field input{width:100%;border:1.5px solid #a5d6a7;border-radius:8px;padding:8px 10px;font-size:14px;outline:none;-webkit-appearance:none;background:#f9fdf9;box-sizing:border-box}
-.ms-field input:focus{border-color:#1a7a2e;box-shadow:0 0 0 3px rgba(26,122,46,0.12);background:#fff}
-.ms-row2{display:flex;align-items:center;gap:8px}
-.logic-toggle{display:flex;align-items:center;gap:6px;flex:1}
-.logic-btn{border:1.5px solid #a5d6a7;background:#f9fdf9;color:#555;border-radius:6px;padding:5px 14px;font-size:13px;font-weight:700;cursor:pointer}
+.multi-search{display:flex;flex-direction:column;gap:6px}
+/* mobile: 3 ô xếp dọc để đủ chỗ bấm */
+.ms-row{display:flex;flex-direction:column;gap:6px}
+.ms-field{display:flex;align-items:center;gap:8px;background:#f9fdf9;border:1.5px solid #a5d6a7;border-radius:10px;padding:0 12px}
+.ms-field:focus-within{border-color:#1a7a2e;box-shadow:0 0 0 3px rgba(26,122,46,0.12);background:#fff}
+.ms-label{font-size:11px;font-weight:700;color:#2e7d32;white-space:nowrap;width:58px;flex-shrink:0;padding:12px 0}
+.ms-sep{width:1px;height:20px;background:#c8e6c9;flex-shrink:0}
+/* font-size:16px ngăn iOS zoom khi focus */
+.ms-field input{flex:1;border:none;background:transparent;padding:12px 0 12px 8px;font-size:16px;outline:none;-webkit-appearance:none;color:#222;min-width:0}
+.ms-row2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.logic-toggle{display:flex;align-items:center;gap:6px}
+.logic-btn{border:1.5px solid #a5d6a7;background:#f9fdf9;color:#555;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .logic-btn.active{background:#1a7a2e;color:#fff;border-color:#1a7a2e}
-.logic-hint{font-size:11px;color:#888;flex:1}
-.clear-btn{border:1.5px solid #ffcdd2;background:#fff8f8;color:#c62828;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.logic-hint{font-size:11px;color:#888;flex:1;min-width:120px}
+.clear-btn{border:1.5px solid #ffcdd2;background:#fff8f8;color:#c62828;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;margin-left:auto;-webkit-tap-highlight-color:transparent}
 .clear-btn:active{background:#ffebee}
 .filters{display:flex;gap:8px}
-.filters select{flex:1;border:1.5px solid #a5d6a7;border-radius:8px;padding:9px 10px;font-size:14px;background:#f9fdf9;outline:none;-webkit-appearance:none;color:#374151}
+.filters select{flex:1;border:1.5px solid #a5d6a7;border-radius:10px;padding:11px 10px;font-size:16px;background:#f9fdf9;outline:none;-webkit-appearance:none;color:#374151}
 .info-bar{padding:8px 12px;font-size:12px;color:#2e7d32;background:#e8f5e9;border-bottom:1px solid #c8e6c9;font-weight:500}
 .list{padding:6px 0 20px}
 
@@ -146,22 +149,25 @@ mark{background:#fff176;border-radius:2px;padding:0 1px}
     <div class="ms-row">
       <div class="ms-field">
         <span class="ms-label">Mã liệu</span>
-        <input type="text" id="q-ma" placeholder="VD: SY10..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="ms-sep"></div>
+        <input type="text" id="q-ma" placeholder="VD: SY10..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search">
       </div>
       <div class="ms-field">
         <span class="ms-label">Tên SP</span>
-        <input type="text" id="q-ten" placeholder="VD: dây điện..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="ms-sep"></div>
+        <input type="text" id="q-ten" placeholder="VD: dây điện..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search">
       </div>
       <div class="ms-field">
         <span class="ms-label">Quy cách</span>
-        <input type="text" id="q-qc" placeholder="VD: 40981..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false">
+        <div class="ms-sep"></div>
+        <input type="text" id="q-qc" placeholder="VD: 40981..." oninput="filter()" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="search">
       </div>
     </div>
     <div class="ms-row2">
       <div class="logic-toggle">
         <button id="btn-and" class="logic-btn active" onclick="setLogic('and')">AND</button>
         <button id="btn-or"  class="logic-btn"        onclick="setLogic('or')">OR</button>
-        <span class="logic-hint" id="logic-hint">Kết quả phải khớp TẤT CẢ điều kiện</span>
+        <span class="logic-hint" id="logic-hint">Khớp TẤT CẢ điều kiện</span>
       </div>
       <button class="clear-btn" onclick="clearSearch()">✕ Xóa</button>
     </div>
