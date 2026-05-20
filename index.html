@@ -376,8 +376,7 @@ async function loadPhotos(ma){
     renderPhotos(merged, ma);
   } catch(err) {
     // Nếu lỗi mạng, vẫn hiển thị ảnh từ cache
-    if(!cached) grid.innerHTML = `<div class="photo-empty">Lỗi tải ảnh: ${err.message}</div>`;
-    console.error('loadPhotos error:', err);
+
   }
 }
 
