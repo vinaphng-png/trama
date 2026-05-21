@@ -350,13 +350,12 @@ function mergeImgs(fromServer, fromLocal){
 async function loadPhotos(ma){
   const grid = document.getElementById('photo-grid');
 
-  // Chỉ dùng cache trong phiên nếu ảnh vừa được upload (có trong photoCache)
-  // KHÔNG dùng localStorage để tránh hiển thị ảnh cũ/lỗi thời cho người dùng khác
-  const cached = photoCache[ma];
+  // Hiển thị nhanh từ cache phiên (sau upload) hoặc localStorage (sau reload)
+  const cached = photoCache[ma] || lsGet(ma);
   if(cached){ renderPhotos(cached, ma); }
   else { grid.innerHTML = '<div class="photo-empty">Đang tải ảnh...</div>'; }
 
-  // Luôn fetch từ Search API để đồng bộ
+  // Luôn fetch từ server — server là nguồn sự thật duy nhất
   try {
     const res  = await fetch(WORKER_URL + '/search', {
       method:  'POST',
@@ -371,22 +370,20 @@ async function loadPhotos(ma){
       url:      r.secure_url,
     }));
 
-    // Chỉ merge ảnh local nếu chúng được upload trong phiên này (trong photoCache)
-    // Tránh hiển thị ảnh cũ từ localStorage của người dùng khác
-    const local  = photoCache[ma] 
-      ? (lsGet(ma) || []).filter(x => photoCache[ma].some(c => c.publicId === x.publicId))
-      : [];
-    const merged = mergeImgs(fromServer, local);
-
-    // Xóa localStorage sau khi server đã index xong
+    // Chỉ giữ ảnh local đang chờ server index (upload trong phiên này, chưa có trên server)
+    const local = lsGet(ma) || [];
     const serverIds = new Set(fromServer.map(x=>x.publicId));
-    const stillPending = (lsGet(ma)||[]).filter(x => !serverIds.has(x.publicId));
+    const stillPending = local.filter(x => !serverIds.has(x.publicId));
+
+    // Cập nhật localStorage: chỉ còn ảnh chưa được server index
+    // Khi server đã có đủ, localStorage tự trở về rỗng → người dùng khác sẽ thấy đúng
     lsSet(ma, stillPending);
 
+    const merged = mergeImgs(fromServer, stillPending);
     photoCache[ma] = merged;
     renderPhotos(merged, ma);
   } catch(err) {
-    // Nếu lỗi mạng, vẫn hiển thị ảnh từ cache
+    // Lỗi mạng: giữ nguyên giao diện đang hiển thị
     if(!cached) grid.innerHTML = `<div class="photo-empty">Lỗi tải ảnh: ${err.message}</div>`;
     console.error('loadPhotos error:', err);
   }
