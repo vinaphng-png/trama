@@ -350,8 +350,9 @@ function mergeImgs(fromServer, fromLocal){
 async function loadPhotos(ma){
   const grid = document.getElementById('photo-grid');
 
-  // Hiển thị ngay từ cache phiên hoặc localStorage trong khi chờ server
-  const cached = photoCache[ma] || lsGet(ma);
+  // Chỉ dùng cache trong phiên nếu ảnh vừa được upload (có trong photoCache)
+  // KHÔNG dùng localStorage để tránh hiển thị ảnh cũ/lỗi thời cho người dùng khác
+  const cached = photoCache[ma];
   if(cached){ renderPhotos(cached, ma); }
   else { grid.innerHTML = '<div class="photo-empty">Đang tải ảnh...</div>'; }
 
@@ -370,13 +371,16 @@ async function loadPhotos(ma){
       url:      r.secure_url,
     }));
 
-    // Merge với ảnh local (phòng khi Search chưa index kịp)
-    const local  = lsGet(ma) || [];
+    // Chỉ merge ảnh local nếu chúng được upload trong phiên này (trong photoCache)
+    // Tránh hiển thị ảnh cũ từ localStorage của người dùng khác
+    const local  = photoCache[ma] 
+      ? (lsGet(ma) || []).filter(x => photoCache[ma].some(c => c.publicId === x.publicId))
+      : [];
     const merged = mergeImgs(fromServer, local);
 
-    // Cập nhật localStorage: chỉ giữ lại ảnh local mà server chưa có
+    // Xóa localStorage sau khi server đã index xong
     const serverIds = new Set(fromServer.map(x=>x.publicId));
-    const stillPending = local.filter(x => !serverIds.has(x.publicId));
+    const stillPending = (lsGet(ma)||[]).filter(x => !serverIds.has(x.publicId));
     lsSet(ma, stillPending);
 
     photoCache[ma] = merged;
@@ -481,7 +485,12 @@ async function uploadImages(input){
 
 function openLightbox(url){document.getElementById('lightbox-img').src=url;document.getElementById('lightbox').classList.add('show');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
-function closeOverlay(){document.getElementById('overlay').classList.remove('show');document.body.style.overflow='';}
+function closeOverlay(){
+  document.getElementById('overlay').classList.remove('show');
+  document.body.style.overflow='';
+  // Xóa cache phiên khi đóng, để lần mở sau luôn fetch ảnh mới từ server
+  if(currentMa) delete photoCache[currentMa];
+}
 function closeSheet(e){if(e.target===document.getElementById('overlay'))closeOverlay();}
 
 run();
