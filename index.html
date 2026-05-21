@@ -331,31 +331,14 @@ function showDetail(idx){
 }
 
 const WORKER_URL = "https://xoa-anh.vina-phng.workers.dev";
-const photoCache = {};
 
-// localStorage: lưu ảnh đã upload để không mất khi reload
-const LS = 'vp2_';
-function lsGet(ma){ try{ return JSON.parse(localStorage.getItem(LS+ma)||'null'); }catch(e){return null;} }
-function lsSet(ma,imgs){ try{ localStorage.setItem(LS+ma, JSON.stringify(imgs)); }catch(e){} }
-function lsDel(ma,publicId){ const a=lsGet(ma); if(a) lsSet(ma,a.filter(x=>x.publicId!==publicId)); }
-
-// Merge 2 danh sách: ưu tiên URL từ Search API, giữ ảnh local chưa được index
-function mergeImgs(fromServer, fromLocal){
-  const map = {};
-  (fromLocal||[]).forEach(x => map[x.publicId] = x);   // local trước
-  (fromServer||[]).forEach(x => map[x.publicId] = x);  // server ghi đè (URL chính thức)
-  return Object.values(map).sort((a,b)=> a.publicId < b.publicId ? -1 : 1);
-}
+// Không dùng localStorage — Cloudinary là nguồn sự thật duy nhất
+// Mọi máy đều đọc trực tiếp từ server → không bao giờ lệch dữ liệu
 
 async function loadPhotos(ma){
   const grid = document.getElementById('photo-grid');
+  grid.innerHTML = '<div class="photo-empty">Đang tải ảnh...</div>';
 
-  // Hiển thị nhanh từ cache phiên (sau upload) hoặc localStorage (sau reload)
-  const cached = photoCache[ma] || lsGet(ma);
-  if(cached){ renderPhotos(cached, ma); }
-  else { grid.innerHTML = '<div class="photo-empty">Đang tải ảnh...</div>'; }
-
-  // Luôn fetch từ server — server là nguồn sự thật duy nhất
   try {
     const res  = await fetch(WORKER_URL + '/search', {
       method:  'POST',
@@ -365,26 +348,13 @@ async function loadPhotos(ma){
     const data = await res.json();
     if(!res.ok) throw new Error(JSON.stringify(data.error || data));
 
-    const fromServer = (data.resources || []).map(r => ({
-      publicId: r.public_id,
-      url:      r.secure_url,
-    }));
+    const imgs = (data.resources || [])
+      .map(r => ({ publicId: r.public_id, url: r.secure_url }))
+      .sort((a,b) => a.publicId < b.publicId ? -1 : 1);
 
-    // Chỉ giữ ảnh local đang chờ server index (upload trong phiên này, chưa có trên server)
-    const local = lsGet(ma) || [];
-    const serverIds = new Set(fromServer.map(x=>x.publicId));
-    const stillPending = local.filter(x => !serverIds.has(x.publicId));
-
-    // Cập nhật localStorage: chỉ còn ảnh chưa được server index
-    // Khi server đã có đủ, localStorage tự trở về rỗng → người dùng khác sẽ thấy đúng
-    lsSet(ma, stillPending);
-
-    const merged = mergeImgs(fromServer, stillPending);
-    photoCache[ma] = merged;
-    renderPhotos(merged, ma);
+    renderPhotos(imgs, ma);
   } catch(err) {
-    // Lỗi mạng: giữ nguyên giao diện đang hiển thị
-    if(!cached) grid.innerHTML = `<div class="photo-empty">Lỗi tải ảnh: ${err.message}</div>`;
+    grid.innerHTML = `<div class="photo-empty">Lỗi tải ảnh: ${err.message}</div>`;
     console.error('loadPhotos error:', err);
   }
 }
@@ -417,12 +387,8 @@ async function deletePhoto(publicIdEncoded, e){
     });
     const data = await res.json();
     if(res.ok){
-      lsDel(currentMa, publicId);
-      if(photoCache[currentMa]){
-        photoCache[currentMa] = photoCache[currentMa].filter(x => x.publicId !== publicId);
-        renderPhotos(photoCache[currentMa], currentMa);
-      }
       status.textContent = '✓ Đã xóa ảnh thành công!';
+      await loadPhotos(currentMa);
     } else {
       status.textContent = 'Lỗi xóa (' + res.status + '): ' + (data.error?.message || JSON.stringify(data));
     }
@@ -438,14 +404,9 @@ async function uploadImages(input){
   const status = document.getElementById('upload-status');
   btn.classList.add('uploading');
 
-  const existing = photoCache[currentMa] || [];
-  const nextIndex = existing.length
-    ? Math.max(...existing.map(x=>{ const m=x.publicId.match(/_(\d+)$/); return m?+m[1]:0; })) + 1
-    : 0;
-
   const newImgs = []; let ok = 0;
   for(let i = 0; i < files.length; i++){
-    const publicId = `sanpham/${currentMa}_${nextIndex + i}`;
+    const publicId = `sanpham/${currentMa}_${Date.now()}_${i}`;
     const fd = new FormData();
     fd.append('file',          files[i]);
     fd.append('upload_preset', PRESET);
@@ -470,12 +431,8 @@ async function uploadImages(input){
   btn.classList.remove('uploading');
   input.value = '';
   if(ok > 0){
-    // Lưu vào localStorage để không mất khi reload
-    const local = lsGet(currentMa) || [];
-    lsSet(currentMa, [...local, ...newImgs]);
-
-    photoCache[currentMa] = [...existing, ...newImgs];
-    renderPhotos(photoCache[currentMa], currentMa);
+    status.textContent = `✓ Đã thêm ${ok} ảnh — đang đồng bộ...`;
+    await loadPhotos(currentMa);
     status.textContent = `✓ Đã thêm ${ok} ảnh thành công!`;
   }
 }
@@ -485,8 +442,6 @@ function closeLightbox(){document.getElementById('lightbox').classList.remove('s
 function closeOverlay(){
   document.getElementById('overlay').classList.remove('show');
   document.body.style.overflow='';
-  // Xóa cache phiên khi đóng, để lần mở sau luôn fetch ảnh mới từ server
-  if(currentMa) delete photoCache[currentMa];
 }
 function closeSheet(e){if(e.target===document.getElementById('overlay'))closeOverlay();}
 
