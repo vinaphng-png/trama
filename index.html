@@ -176,7 +176,7 @@
             font-style: italic;
         }
 
-        /* Giao diện danh sách trên Điện thoại (Mặc định ẩn, hiện trên mobile) */
+        /* Giao diện danh sách trên Điện thoại */
         .mobile-list {
             display: none;
             flex-direction: column;
@@ -211,7 +211,7 @@
         }
         .mobile-info {
             flex: 1;
-            min-width: 0; /* Tránh tràn text */
+            min-width: 0;
         }
         .mobile-info .m-code {
             font-weight: bold;
@@ -340,7 +340,7 @@
             object-fit: contain;
         }
 
-        /* RESPONSIVE DESIGN - CẤU HÌNH ĐIỆN THOẠI (< 768px) */
+        /* RESPONSIVE DESIGN - ĐIỆN THOẠI (< 768px) */
         @media (max-width: 767px) {
             body { padding: 8px; }
             header { padding: 10px; margin-bottom: 10px; }
@@ -348,15 +348,8 @@
             .logo-box img { height: 40px; }
             .card { padding: 12px; border-radius: 10px; }
             .search-panel { padding: 10px; }
-            
-            /* Ẩn bảng trên điện thoại */
-            .table-responsive {
-                display: none;
-            }
-            /* Hiện danh sách card xếp dọc */
-            .mobile-list {
-                display: flex;
-            }
+            .table-responsive { display: none; }
+            .mobile-list { display: flex; }
         }
     </style>
 </head>
@@ -385,8 +378,8 @@
                     <div class="form-group">
                         <label>Liên kết bộ lọc</label>
                         <select id="searchLogic" class="form-control logic-select">
-                            <option value="AND">VÀ (AND)</option>
-                            <option value="OR">HOẶC (OR)</option>
+                            <option value="AND">VÀ (AND) - Lọc kết hợp</option>
+                            <option value="OR">HOẶC (OR) - Khớp 1 trong các ô</option>
                         </select>
                     </div>
 
@@ -452,7 +445,6 @@
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // DỮ LIỆU MÃ LIỆU SẢN PHẨM GỐC
         const dataMaLieu = [
             {"ma_sp":"SY32101578","ten_sp":"IC","quy_cach":"HC8016","quy_cach2":"","don_vi":"PCS","ma_kh":"","mo_ta":"","kho":"YL01"},
             {"ma_sp":"SY32400063","ten_sp":"PCB小板","quy_cach":"FR4 L*W=37.7*13mm 板厚1.0；","quy_cach2":"","don_vi":"PCS","ma_kh":"","mo_ta":"","kho":"YL01"},
@@ -479,7 +471,6 @@
 
         let mapAnhThucTe = {};
 
-        // Các biến điều khiển DOM
         const searchMa = document.getElementById('searchMa');
         const searchTen = document.getElementById('searchTen');
         const searchQuyCach = document.getElementById('searchQuyCach');
@@ -487,12 +478,9 @@
         const dataTableBody = document.getElementById('dataTableBody');
         const mobileDataContainer = document.getElementById('mobileDataContainer');
         const statusGlobal = document.getElementById('status-global');
-
-        // Biến điều khiển Modal Popup
         const detailModal = document.getElementById('detailModal');
         const btnModalClose = document.getElementById('btnModalClose');
 
-        // Cấu hình kết nối dữ liệu Firebase đám mây
         const firebaseConfig = {
             databaseURL: "https://erp-product-1ccba-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
@@ -504,16 +492,15 @@
 
         signInAnonymously(auth)
             .then(() => {
-                statusGlobal.innerText = "● Hệ thống Realtime đã sẵn sàng kết nối.";
+                statusGlobal.innerText = "● Hệ thống Realtime đã kết nối thông suốt.";
                 kíchHoạtHệThốngDữLiệu();
             })
             .catch(() => {
-                statusGlobal.innerText = "● Đang chạy chế độ kết nối trực tiếp.";
+                statusGlobal.innerText = "● Chạy dữ liệu nội bộ trực tiếp.";
                 kíchHoạtHệThốngDữLiệu();
             });
 
         function kíchHoạtHệThốngDữLiệu() {
-            // Lắng nghe liên tục dữ liệu ảnh cập nhật realtime từ máy chủ
             onValue(dbProductRootRef, (snapshot) => {
                 const data = snapshot.val();
                 if (data) mapAnhThucTe = data;
@@ -521,7 +508,7 @@
             });
         }
 
-        // HÀM HIỂN THỊ DỮ LIỆU ĐỒNG THỜI TRÊN CẢ PC (TABLE) VÀ MOBILE (CARDS)
+        // ĐOẠN ĐÃ SỬA LỖI: LOGIC TÌM KIẾM THÔNG MINH, KHÔNG CÒN BỊ TRỐNG DÒNG
         function renderDuLieuHeThong() {
             dataTableBody.innerHTML = "";
             mobileDataContainer.innerHTML = "";
@@ -532,30 +519,35 @@
             const logic = searchLogic.value;
 
             dataMaLieu.forEach(item => {
-                const matchMa = valMa === "" || item.ma_sp.toLowerCase().includes(valMa);
-                const matchTen = valTen === "" || item.ten_sp.toLowerCase().includes(valTen);
-                const matchQuyCach = valQuyCach === "" || item.quy_cach.toLowerCase().includes(valQuyCach);
+                const matchMa = item.ma_sp.toLowerCase().includes(valMa);
+                const matchTen = item.ten_sp.toLowerCase().includes(valTen);
+                const matchQuyCach = item.quy_cach.toLowerCase().includes(valQuyCach);
 
                 let isMatch = false;
+
                 if (logic === "AND") {
-                    isMatch = matchMa && matchTen && matchQuyCach;
+                    // Chế độ AND thông minh: Chỉ bắt khớp với những ô THỰC SỰ có điền ký tự
+                    isMatch = (valMa === "" || matchMa) && 
+                              (valTen === "" || matchTen) && 
+                              (valQuyCach === "" || matchQuyCach);
                 } else {
+                    // Chế độ OR: Nếu tất cả trống thì hiện hết, ngược lại khớp 1 trong các ô có chữ là được
                     if (valMa === "" && valTen === "" && valQuyCach === "") {
                         isMatch = true;
                     } else {
-                        isMatch = (valMa !== "" && matchMa) || (valTen !== "" && matchTen) || (valQuyCach !== "" && matchQuyCach);
+                        isMatch = (valMa !== "" && matchMa) || 
+                                  (valTen !== "" && matchTen) || 
+                                  (valQuyCach !== "" && matchQuyCach);
                     }
                 }
 
                 if (isMatch) {
                     const srcAnh = mapAnhThucTe[item.ma_sp];
                     
-                    // --- RENDERING CHO PHIÊN BẢN MÁY TÍNH (BẢNG) ---
+                    // --- HIỂN THỊ TRÊN MÁY TÍNH (PC TABLE) ---
                     const row = document.createElement('tr');
                     let imgHtmlPC = `<span class="no-img">Chưa có</span>`;
-                    if (srcAnh) {
-                        imgHtmlPC = `<img src="${srcAnh}" class="preview-img">`;
-                    }
+                    if (srcAnh) imgHtmlPC = `<img src="${srcAnh}" class="preview-img">`;
 
                     row.innerHTML = `
                         <td style="font-weight:bold; color:var(--primary-color);">${item.ma_sp}</td>
@@ -569,18 +561,15 @@
                             <input type="file" id="pc-file-${item.ma_sp}" class="input-file-hidden" accept="image/*" data-masp="${item.ma_sp}">
                         </td>
                     `;
-                    // Bấm vào bất kỳ đâu trên dòng để xem chi tiết
                     row.addEventListener('click', () => moPopupChiTietVatTu(item));
                     dataTableBody.appendChild(row);
 
-                    // --- RENDERING CHO PHIÊN BẢN ĐIỆN THOẠI (THẺ DI ĐỘNG) ---
+                    // --- HIỂN THỊ TRÊN ĐIỆN THOẠI (MOBILE CARDS) ---
                     const mobileCard = document.createElement('div');
                     mobileCard.className = 'mobile-item-card';
                     
                     let imgHtmlMobile = `<span class="no-img" style="font-size:11px;">Chưa ảnh</span>`;
-                    if (srcAnh) {
-                        imgHtmlMobile = `<img src="${srcAnh}">`;
-                    }
+                    if (srcAnh) imgHtmlMobile = `<img src="${srcAnh}">`;
 
                     mobileCard.innerHTML = `
                         <div class="mobile-img-box">${imgHtmlMobile}</div>
@@ -595,18 +584,15 @@
                             <input type="file" id="mb-file-${item.ma_sp}" class="input-file-hidden" accept="image/*" data-masp="${item.ma_sp}">
                         </div>
                     `;
-                    // Bấm vào thẻ để xem chi tiết thông tin
                     mobileCard.addEventListener('click', () => moPopupChiTietVatTu(item));
                     mobileDataContainer.appendChild(mobileCard);
 
-                    // Kích hoạt sự kiện tải ảnh cho cả nút bấm trên PC và di động
                     row.querySelector('.input-file-hidden').addEventListener('change', xuLyUpAnhRealtimeNen);
                     mobileCard.querySelector('.input-file-hidden').addEventListener('change', xuLyUpAnhRealtimeNen);
                 }
             });
         }
 
-        // HÀM XỬ LÝ ĐÓNG MỞ HỘP THOẠI XEM CHI TIẾT
         function moPopupChiTietVatTu(item) {
             document.getElementById('m-code').innerText = item.ma_sp;
             document.getElementById('m-name').innerText = item.ten_sp;
@@ -627,20 +613,18 @@
             detailModal.style.display = "flex";
         }
 
-        // Đóng modal khi bấm nút X hoặc bấm ra ngoài màn hình nền
         btnModalClose.addEventListener('click', () => detailModal.style.display = "none");
         detailModal.addEventListener('click', (e) => {
             if (e.target === detailModal) detailModal.style.display = "none";
         });
 
-        // HÀM XỬ LÝ UP ẢNH & NÉN ẢNH REALTIME
         function xuLyUpAnhRealtimeNen(event) {
             const file = event.target.files[0];
             const maSP = event.target.getAttribute('data-masp');
             if (!file || !maSP) return;
 
             statusGlobal.className = "status-loading";
-            statusGlobal.innerText = `⏳ Đang nén & truyền dữ liệu ảnh mã: ${maSP}...`;
+            statusGlobal.innerText = `⏳ Đang nén & cập nhật ảnh mã: ${maSP}...`;
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -649,7 +633,7 @@
                 
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; // Tăng chất lượng ảnh lên một chút để xem trên popup rõ nét hơn
+                    const MAX_WIDTH = 600; 
                     const scale = MAX_WIDTH / img.width;
                     canvas.width = MAX_WIDTH;
                     canvas.height = img.height * scale;
@@ -664,16 +648,15 @@
                         statusGlobal.className = "";
                         statusGlobal.innerText = "● Đã cập nhật ảnh thành công lên hệ thống!";
                         
-                        // Nếu đang mở đúng mã sản phẩm vừa up ảnh trong popup, cập nhật ảnh hiển thị trong popup luôn
                         if (detailModal.style.display === "flex" && document.getElementById('m-code').innerText === maSP) {
                             document.getElementById('m-img').src = base64Str;
                             document.getElementById('m-img').style.display = "block";
                         }
                         
-                        setTimeout(() => { statusGlobal.innerText = "● Đã đồng bộ dữ liệu ảnh Realtime từ hệ thống."; }, 2000);
+                        setTimeout(() => { statusGlobal.innerText = "● Hệ thống Realtime đã kết nối thông suốt."; }, 2000);
                     })
                     .catch((err) => {
-                        alert("Lỗi tải ảnh: " + err.message);
+                        alert("Lỗi tải ảnh lên: " + err.message);
                         statusGlobal.className = "";
                     });
                 };
@@ -681,13 +664,11 @@
             reader.readAsDataURL(file);
         }
 
-        // LẮNG NGHE SỰ KIỆN GÕ PHÍM TRÊN CÁC Ô TÌM KIẾM
         searchMa.addEventListener('input', renderDuLieuHeThong);
         searchTen.addEventListener('input', renderDuLieuHeThong);
         searchQuyCach.addEventListener('input', renderDuLieuHeThong);
         searchLogic.addEventListener('change', renderDuLieuHeThong);
 
-        // Khởi động render dữ liệu mặc định ban đầu
         renderDuLieuHeThong();
     </script>
 </body>
