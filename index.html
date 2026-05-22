@@ -296,6 +296,25 @@
   }
   .btn-upload-modal:hover { background: var(--green-dark); }
   .btn-upload-modal:disabled { background: var(--muted); cursor: not-allowed; }
+  .btn-delete-modal {
+    width: 100%;
+    padding: 11px;
+    background: #fff0f0;
+    color: #c0392b;
+    border: 1.5px solid #e74c3c;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .btn-delete-modal:hover { background: #e74c3c; color: #fff; }
+  .btn-delete-modal:disabled { background: var(--muted); border-color: var(--muted); color: #fff; cursor: not-allowed; }
   .upload-progress {
     margin-top: 8px;
     font-size: 12px;
@@ -432,6 +451,10 @@
         <button class="btn-upload-modal" id="btnUpload" onclick="triggerUpload()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Chọn ảnh để tải lên
+        </button>
+        <button class="btn-delete-modal" id="btnDelete" onclick="deleteImage()" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v2"/></svg>
+          Xóa ảnh này
         </button>
         <div class="upload-progress" id="uploadProgress"></div>
       </div>
@@ -676,6 +699,8 @@ function openModal(code) {
   document.getElementById('btnUpload').disabled = false;
   document.getElementById('btnUpload').innerHTML =
     `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Chọn ảnh để tải lên`;
+  document.getElementById('btnDelete').style.display = images[k] ? 'flex' : 'none';
+  document.getElementById('btnDelete').disabled = false;
   document.getElementById('modalOverlay').classList.add('open');
 }
 
@@ -730,6 +755,8 @@ function handleFile(e) {
         btn.disabled = false;
         btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Tải ảnh khác`;
         prog.textContent = '✅ Đã lưu thành công! Mọi người có thể xem ảnh này.';
+        document.getElementById('btnDelete').style.display = 'flex';
+        document.getElementById('btnDelete').disabled = false;
         showToast('Tải ảnh thành công! 🎉', 'success');
         render(); // refresh table
       }).catch(err => {
@@ -741,6 +768,35 @@ function handleFile(e) {
     };
   };
   reader.readAsDataURL(file);
+}
+
+// ===== DELETE IMAGE =====
+async function deleteImage() {
+  if (!currentCode) return;
+  if (!confirm(`Xóa ảnh của mã "${currentCode}"?\nTất cả mọi người sẽ không còn thấy ảnh này.`)) return;
+
+  const btnDel = document.getElementById('btnDelete');
+  const prog   = document.getElementById('uploadProgress');
+  btnDel.disabled = true;
+  btnDel.innerHTML = '⏳ Đang xóa...';
+  prog.textContent = 'Đang xóa trên Firebase...';
+
+  const safeKey = currentCode.replace(/[.#$\[\]]/g, '_');
+  try {
+    const res = await fetch(`${FIREBASE_URL}/images/${safeKey}.json`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    delete images[safeKey];
+    document.getElementById('mImgWrap').innerHTML = `<div class="no-img-text">📷 Chưa có ảnh sản phẩm</div>`;
+    btnDel.style.display = 'none';
+    prog.textContent = '🗑️ Đã xóa ảnh thành công.';
+    showToast('Đã xóa ảnh!', 'success');
+    render();
+  } catch(e) {
+    btnDel.disabled = false;
+    btnDel.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v2"/></svg> Xóa ảnh này`;
+    prog.textContent = '❌ Lỗi xóa: ' + e.message;
+    showToast('Lỗi xóa ảnh: ' + e.message, 'error');
+  }
 }
 
 // ===== TOAST =====
