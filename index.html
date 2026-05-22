@@ -3,35 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hệ Thống Tra Cứu Vật Liệu</title>
+<title>CÔNG TY TNHH SI YUAN TECH</title>
 <style>
   :root {
-    --green: #00a86b;
-    --green-light: #e6f7f1;
-    --green-dark: #007a4d;
-    --bg: #f4f6f9;
+    --green: #2ebd4e;
+    --green-light: #eaf8ee;
+    --green-dark: #1e9138;
+    --blue: #29abe2;
+    --blue-light: #e8f6fd;
+    --blue-dark: #1787bb;
+    --bg: #f2f7f4;
     --white: #ffffff;
-    --border: #e2e6ea;
-    --text: #1a2332;
-    --muted: #6b7a8d;
+    --border: #d8e8dc;
+    --text: #1a2a22;
+    --muted: #6b7e72;
     --radius: 10px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --shadow: 0 2px 12px rgba(46,189,78,0.09);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: 'Segoe UI', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
 
   /* HEADER */
   .header {
-    background: var(--green);
+    background: linear-gradient(135deg, #1e9138 0%, #2ebd4e 50%, #29abe2 100%);
     color: #fff;
-    padding: 16px 24px;
+    padding: 14px 24px;
     display: flex;
     align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(0,168,107,0.3);
+    gap: 14px;
+    box-shadow: 0 3px 12px rgba(46,189,78,0.35);
   }
-  .header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.3px; }
-  .header .subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .header-logo {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: #fff;
+    padding: 4px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-logo img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; }
+  .header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.2px; }
+  .header .subtitle { font-size: 11px; opacity: 0.88; margin-top: 2px; }
   .stat-badge {
     margin-left: auto;
     background: rgba(255,255,255,0.2);
@@ -155,7 +168,7 @@
   }
   .data-table { width: 100%; border-collapse: collapse; }
   .data-table th {
-    background: var(--green);
+    background: linear-gradient(90deg, #2ebd4e, #29abe2);
     color: #fff;
     padding: 12px 14px;
     text-align: left;
@@ -172,14 +185,14 @@
   }
   .data-table tbody tr:last-child td { border-bottom: none; }
   .data-table tbody tr:hover { background: #f8fffe; cursor: pointer; }
-  .code-cell { font-family: monospace; font-weight: 600; color: var(--green-dark); font-size: 12px; }
+  .code-cell { font-family: monospace; font-weight: 600; color: var(--blue-dark); font-size: 12px; }
   .name-cell { font-weight: 500; max-width: 200px; }
   .spec-cell { color: var(--muted); max-width: 200px; font-size: 12px; }
   .name-cell, .spec-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .warehouse-badge {
     display: inline-block;
-    background: var(--green-light);
-    color: var(--green-dark);
+    background: var(--blue-light);
+    color: var(--blue-dark);
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 11px;
@@ -196,8 +209,8 @@
   .btn-upload {
     padding: 5px 12px;
     background: var(--white);
-    color: var(--green);
-    border: 1.5px solid var(--green);
+    color: var(--blue-dark);
+    border: 1.5px solid var(--blue);
     border-radius: 6px;
     font-size: 12px;
     cursor: pointer;
@@ -205,7 +218,7 @@
     transition: all 0.2s;
     white-space: nowrap;
   }
-  .btn-upload:hover { background: var(--green); color: #fff; }
+  .btn-upload:hover { background: var(--blue); color: #fff; }
 
   /* CARD MODE (mobile) */
   .card-list { display: none; flex-direction: column; gap: 10px; margin: 0 16px 16px; }
@@ -218,8 +231,8 @@
     cursor: pointer;
     transition: box-shadow 0.2s;
   }
-  .card:hover { box-shadow: 0 4px 20px rgba(0,168,107,0.15); }
-  .card-code { font-family: monospace; font-size: 11px; color: var(--green-dark); font-weight: 700; margin-bottom: 4px; }
+  .card:hover { box-shadow: 0 4px 20px rgba(46,189,78,0.18); }
+  .card-code { font-family: monospace; font-size: 11px; color: var(--blue-dark); font-weight: 700; margin-bottom: 4px; }
   .card-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
   .card-spec { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
   .card-footer { display: flex; align-items: center; justify-content: space-between; }
@@ -260,7 +273,7 @@
     padding: 18px 20px 14px;
     border-bottom: 1px solid var(--border);
   }
-  .modal-title { font-size: 15px; font-weight: 700; color: var(--green-dark); }
+  .modal-title { font-size: 15px; font-weight: 700; color: var(--blue-dark); }
   .modal-close {
     background: none; border: none; cursor: pointer;
     color: var(--muted); font-size: 20px; line-height: 1;
@@ -281,7 +294,7 @@
   .btn-upload-modal {
     width: 100%;
     padding: 11px;
-    background: var(--green);
+    background: var(--blue);
     color: #fff;
     border: none;
     border-radius: 8px;
@@ -294,7 +307,7 @@
     justify-content: center;
     gap: 8px;
   }
-  .btn-upload-modal:hover { background: var(--green-dark); }
+  .btn-upload-modal:hover { background: var(--blue-dark); }
   .btn-upload-modal:disabled { background: var(--muted); cursor: not-allowed; }
   .btn-delete-modal {
     width: 100%;
@@ -366,10 +379,12 @@
 <body>
 
 <div class="header">
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  <div class="header-logo">
+    <img src="https://lh3.googleusercontent.com/a/ACg8ocKUtvBGsMHml5BW8R9T2n-vVW0pjBlPZEqd_ruZGfupKUi21LFS=s288-c-no" alt="Logo">
+  </div>
   <div>
-    <h1>Hệ Thống Tra Cứu Vật Liệu</h1>
-    <div class="subtitle">Dữ liệu từ Google Sheets · Ảnh lưu Firebase</div>
+    <h1>CÔNG TY TNHH SI YUAN TECH</h1>
+    <div class="subtitle"> </div>
   </div>
   <div class="stat-badge" id="totalBadge">Đang tải...</div>
 </div>
@@ -406,7 +421,7 @@
 
 <div id="loadingWrap" class="loading-wrap">
   <div class="spinner"></div>
-  <div class="loading-text">Đang tải dữ liệu từ Google Sheets...</div>
+  <div class="loading-text">在问问12...</div>
 </div>
 
 <div class="table-wrap" id="tableWrap" style="display:none">
