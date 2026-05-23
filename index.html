@@ -5,6 +5,93 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CÔNG TY TNHH SI YUAN TECH</title>
 <style>
+.quote-container{
+    margin:20px auto;
+    max-width:900px;
+    text-align:center;
+}
+
+#quote-box{
+    position:relative;
+    overflow:hidden;
+
+    padding:22px 28px;
+
+    border-radius:22px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #f1f5f9
+        );
+
+    border:1px solid #e2e8f0;
+
+    color:#0f172a;
+
+    font-size:16px;
+    line-height:1.9;
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,0.08);
+
+    animation:fadeIn .4s;
+}
+
+.quote-cn{
+    margin-top:8px;
+
+    color:#64748b;
+
+    font-size:13px;
+}
+
+.quote-btn{
+    margin-top:14px;
+
+    padding:10px 20px;
+
+    border:none;
+    border-radius:12px;
+
+    cursor:pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #1d4ed8
+        );
+
+    color:white;
+
+    font-size:14px;
+    font-weight:600;
+
+    transition:.25s;
+
+    box-shadow:
+        0 4px 12px rgba(37,99,235,0.25);
+}
+
+.quote-btn:hover{
+    transform:translateY(-2px);
+
+    opacity:.92;
+}
+
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(8px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
   :root {
     --green: #2ebd4e;
     --green-light: #eaf8ee;
@@ -377,7 +464,15 @@
 </style>
 </head>
 <body>
+<div class="quote-container">
 
+    <div id="quote-box"></div>
+
+    <button class="quote-btn" onclick="randomQuote()">
+        🎲 Quote khác
+    </button>
+
+</div>
 <div class="header">
   <div class="header-logo">
     <img src="https://lh3.googleusercontent.com/a/ACg8ocKUtvBGsMHml5BW8R9T2n-vVW0pjBlPZEqd_ruZGfupKUi21LFS=s288-c-no" alt="Logo">
@@ -845,6 +940,55 @@ async function init() {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 init();
+</script>
+<script>
+
+const quotes = [
+
+{
+vi:"Mã liệu không tự mất đi, chỉ là bạn chưa tìm đúng cột。",
+cn:"物料编码不会消失，只是你还没找对栏目。"
+},
+
+{
+vi:"ERP nhớ mọi thứ, kể cả lỗi bạn muốn quên。",
+cn:"ERP记得一切，包括你想忘记的错误。"
+},
+
+{
+vi:"Kho càng yên tĩnh, cuối tháng càng đáng sợ。",
+cn:"仓库越安静，月底越可怕。"
+},
+
+{
+vi:"Chỉ cần lệch 0.1mm là cả thế giới bắt đầu họp。",
+cn:"只要偏0.1毫米，全世界就开始开会。"
+},
+
+{
+vi:"Loading lâu không có nghĩa là web đang chết。",
+cn:"加载慢不代表网站挂了。"
+},
+
+{
+vi:"Không có sản phẩm hoàn hảo, chỉ có report chưa gửi。",
+cn:"没有完美的产品，只有还没发出的报告。"
+}
+
+];
+
+function randomQuote(){
+
+    const q = quotes[Math.floor(Math.random()*quotes.length)];
+
+    document.getElementById("quote-box").innerHTML = `
+        <div>💡 ${q.vi}</div>
+        <div class="quote-cn">${q.cn}</div>
+    `;
+}
+
+randomQuote();
+
 </script>
 </body>
 </html>
