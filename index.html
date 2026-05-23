@@ -7,8 +7,17 @@
 <style>
 .quote-container{
     margin:20px auto;
+
     max-width:900px;
+
     text-align:center;
+
+    max-height:220px;
+
+    overflow-y:auto;
+
+    padding:15px 20px;
+}
 }
 
 #quote-box{
@@ -461,18 +470,12 @@
     color: #856404;
     display: none;
   }
+
+}
 </style>
 </head>
 <body>
-<div class="quote-container">
 
-    <div id="quote-box"></div>
-
-    <button class="quote-btn" onclick="randomQuote()">
-        🎲 Quote khác
-    </button>
-
-</div>
 <div class="header">
   <div class="header-logo">
     <img src="https://lh3.googleusercontent.com/a/ACg8ocKUtvBGsMHml5BW8R9T2n-vVW0pjBlPZEqd_ruZGfupKUi21LFS=s288-c-no" alt="Logo">
@@ -484,6 +487,15 @@
   <div class="stat-badge" id="totalBadge">Đang tải...</div>
 </div>
 
+<div class="quote-container">
+
+    <div id="quote-box"></div>
+
+    <button class="quote-btn" onclick="randomQuote()">
+        🎲 Quote khác
+    </button>
+
+</div>
 <div class="search-panel">
   <div class="search-top">
     <div class="search-keyword">
